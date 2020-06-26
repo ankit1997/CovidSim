@@ -4,40 +4,39 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-# plt.style.use('ggplot')
-
 # World settings
 
 Region = pd.DataFrame({
 	# id of region
-	'region_id': [0, 1],
+	'region_id': [0, 1, 2],
 	# name of region
-	'region_name': ['USA', 'India'],
+	'region_name': ['USA', 'India', 'Canada'],
 	# region color
 	'region_color': [
 		[1.0, 0.0, 0.0], # USA
-		[0.0, 0.0, 1.0]  # India
+		[0.0, 0.0, 1.0], # India
+		[0.0, 1.0, 0.0], # Canada
 	],
 	# probability of people travelling locally
-	'travel_dom': [1.0, 1.0],
+	'travel_dom': [1.0, 1.0, 1.0],
 	# probability of people travelling internationally
-	'travel_int': [0.0, 0.01],
+	'travel_int': [0.01, 0.01, 0.01],
 	# probability of people begin quarantined
-	'quarantie': [0.0, 0.0],
+	'quarantie': [0.0, 0.0, 0.0],
 	# Xmin of region
-	'xmin': [0, 150],
+	'xmin': [0, 150, 300],
 	# Xmax of region
-	'xmax': [100, 250],
+	'xmax': [100, 250, 400],
 	# Ymin of region
-	'ymin': [0, 0],
+	'ymin': [0, 0, 0],
 	# Ymax of region
-	'ymax': [100, 100],
+	'ymax': [100, 100, 100],
 	# infection radius of region
-	'infection_radius': [1.0, 1.0],
+	'infection_radius': [1.0, 1.0, 1.0],
 	# probability that a person in contact with infected person will also get infected
-	'prob_of_spread': [0.2, 0.2],
+	'prob_of_spread': [0.2, 0.2, 0.2],
 	# variance of domestic travel
-	'domestic_travel_step': [4.0, 4.0]
+	'domestic_travel_step': [4.0, 4.0, 4.0]
 })
 
 People = pd.DataFrame({
