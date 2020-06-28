@@ -6,7 +6,7 @@ def validate_people(people):
     
     try:
         if np.count_nonzero(people.isna().values) > 0:
-            raise ValueError("People array messed up!")
+            raise ValueError("People's array messed up!")
     except Exception as exp:
         print(exp)
         ans = input('Do you want to continue? [y/n]: ')

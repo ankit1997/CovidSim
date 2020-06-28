@@ -16,7 +16,7 @@ REGIONS = pd.DataFrame({
 	'ymax': [100, 100, 220, 220],
 
     'quarantine': [0.0] * n,
-	'infection_radius': [1.0] * n,
+	'infection_radius': [5.0] * n,
 	'prob_of_spread': [0.2] * n
 
 })

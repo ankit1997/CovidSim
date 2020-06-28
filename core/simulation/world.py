@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from core.utils import ops
 from core.simulation.people import PEOPLE
 from core.simulation.regions import REGIONS
 from core.simulation.validator import validate_people, validate_regions
@@ -22,8 +23,6 @@ class World(object):
 	def initialize(self):
 		# initialize world dataframe
 		print('Initializing a {}x{} world...'.format(len(self.regions), self.num_people))
-
-		num_regions = float(len(self.regions))
 
 		# loop for each region
 		for i, region in enumerate(self.regions.region_name):
@@ -47,96 +46,58 @@ class World(object):
 	def simulate(self):
 		self.t += 1
 
-		self.move_domestic()
-		self.move_international()
-
-		return self.people, self.regions
+		self.move()
+		self.spread_infections()
 	
-	def move_domestic(self):
-		# simulate domestic travel
+	def move(self):
+		# simulate travel
+
+		# number of people
+		N = self.people.shape[0]
 
 		# join people and regions
 		combined = pd.merge(self.people, self.regions, on='region_name', how='left')
 
-		# get people who will move
-		move_idx = (np.random.random((combined.shape[0], )) < combined['travel_dom']) & (combined.loc[:, 'alive'] == 1.0)
-
-		# move people
-		move_x = np.random.normal(scale=combined.loc[move_idx, 'domestic_travel_step']).reshape((-1, 1))
-		move_y = np.random.normal(scale=combined.loc[move_idx, 'domestic_travel_step']).reshape((-1, 1))
-		combined.loc[move_idx, ['x', 'y']] += np.concatenate([move_x, move_y], axis=1)
-
-		# make sure no one leaves boundary while domestic travel
-		combined.loc[move_idx, 'x'] = combined.loc[move_idx, 'x'].clip(combined.loc[move_idx, 'xmin'], combined.loc[move_idx, 'xmax'])
-		combined.loc[move_idx, 'y'] = combined.loc[move_idx, 'y'].clip(combined.loc[move_idx, 'ymin'], combined.loc[move_idx, 'ymax'])
-
-		# get new people dataframe from movers
-		self.people.loc[move_idx, ['x', 'y']] = combined.loc[move_idx, ['x', 'y']]
-
-	def move_international(self):
-		# simulate international travel
-
-		# if only one region in simulaton, return as no international travel possible
-		if len(self.regions) == 1:
-			return
-
-		# join people and regions
-		combined = pd.merge(self.people, self.regions, on='region_name', how='left')
-
-		# get people who will move
-		move_idx = (np.random.random((combined.shape[0], )) < combined['travel_int']) & (combined.loc[:, 'alive'] == 1.0)
-
-		if np.count_nonzero(move_idx) == 0:
-			return
+		# get travellers indices
+		alive = combined.loc[:, 'alive'] == 1
+		domestic = alive & (ops.random1D(N) < combined['travel_dom'])
+		international = alive & (ops.random1D(N) < combined['travel_int'])
 		
-		# update region name of movers to new random region
-		combined.loc[move_idx, 'region_name'] = combined.loc[move_idx, 'region_name'].apply(
-			lambda region: self.regions[self.regions.region_name != region].region_name.sample(n=1).item()
-		)
+		# get new domestic coordinates
+		move_x = ops.random_normal1D(combined.loc[domestic, 'domestic_travel_step'].values)
+		move_y = ops.random_normal1D(combined.loc[domestic, 'domestic_travel_step'].values)
 		
-		# get new location of movers
-		movers_comb = combined.loc[move_idx, ['region_name', 'x', 'y']].merge(self.regions, on='region_name', how='left').set_index(combined.loc[move_idx, :].index)
-		movers_comb.loc[:, 'x'] = np.random.uniform(movers_comb.xmin, movers_comb.xmax)
-		movers_comb.loc[:, 'y'] = np.random.uniform(movers_comb.ymin, movers_comb.ymax)
+		# move people and make sure no one leaves boundary while domestic travel
+		combined.loc[domestic, 'x'] = ops.clip1D(ops.add1D(combined.loc[domestic, 'x'].values, move_x), combined.loc[domestic, 'xmin'].values, combined.loc[domestic, 'xmax'].values)
+		combined.loc[domestic, 'y'] = ops.clip1D(ops.add1D(combined.loc[domestic, 'y'].values, move_y), combined.loc[domestic, 'ymin'].values, combined.loc[domestic, 'ymax'].values)
+		
+		# move domestic
+		self.people.loc[domestic, ['x', 'y']] = combined.loc[domestic, ['x', 'y']]
+		
+		if ops.any1D(international.values):
 
-		# update co-ordinates and region name of international travellers
-		self.people.loc[move_idx, ['x', 'y', 'region_name']] = movers_comb.loc[:, ['x', 'y', 'region_name']]
+			new_region_index, new_x, new_y = ops.travel_international(
+				combined.loc[international, 'region_id'].values, 
+				self.regions.index.values, 
+				self.regions.xmin.values, 
+				self.regions.xmax.values,
+				self.regions.ymin.values, 
+				self.regions.ymax.values
+			)
+
+			self.people.loc[international, 'region_name'] = self.regions.loc[new_region_index, 'region_name'].values
+			self.people.loc[international, 'x'] = new_x
+			self.people.loc[international, 'y'] = new_y
 	
 	def spread_infections(self):
 		# infect new people
 
-		for i, region in enumerate(self.regions.region_name):
+		combined = pd.merge(self.people, self.regions, on='region_name', how='left')
 
-			# get region population
-			local = self.people.loc[self.people.region_name == region, :]
-			
-			# calculate distances between each person in the region
-			Xdiff = (local.x.values[:, None] - local.x.values) ** 2
-			Ydiff = (local.y.values[:, None] - local.y.values) ** 2
-			# distance is N x N matrix of squared distances between each pair of points
-			distance = Xdiff + Ydiff
-
-			# filter distances for infected people only since they'll spread infection
-			infected_mask = local.infection > 0.0
-			infected_dist = distance[infected_mask]
-
-			# calculate people in threshold distance
-			thres = np.argwhere(infected_dist <= (self.regions.loc[i, 'infection_radius'] ** 2))
-			thres_infectee = thres[:, 0]                        # already infected people
-			thres_infected = thres[:, 1]                        # in threshold distance to infected people
-
-			# index of people who are in threshold distance to infected people and are currently uninfected
-			idx = local.loc[thres_infected, 'infection'] == 0.0
-			
-			infection_creators = thres_infectee[idx]
-			candidates = thres_infected[idx]
-			
-			if candidates.size > 0:
-				# get prob that each candidate will get infection
-				cand_prob = np.random.random(candidates.shape) <= self.regions.loc[i, 'prob_of_spread']
-				
-				infection_creators = infection_creators[cand_prob]
-				newly_infected = candidates[cand_prob]
-
-				# infect candidates :(
-				self.people.loc[newly_infected, 'infection'] = self.people.loc[infection_creators, 'infection']
+		# infectant = agent of infection
+		# infectee = person getting infected
+		infectant, infectee = ops.get_new_infections(combined.x.values, combined.y.values,
+													combined.alive.values, combined.infection.values, 
+													combined.infection_radius.values, combined.prob_of_spread.values)
+		
+		self.people.loc[infectee, 'infection'] = self.people.loc[infectant, 'infection'].values
