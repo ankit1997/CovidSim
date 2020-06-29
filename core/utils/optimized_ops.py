@@ -1,27 +1,6 @@
 import numba
 import numpy as np
-from random import random, uniform, normalvariate, shuffle
-
-@numba.jit(nopython=True)
-def random1D(n):
-    result = np.empty((n,))
-    for i in range(n):
-        result[i] = random()
-    return result
-
-@numba.jit(nopython=True)
-def random_uniform1D(low, high):
-    result = np.empty_like(low)
-    for i in range(low.shape[0]):
-        result[i] = uniform(low[i], high[i])
-    return result
-
-@numba.jit(nopython=True)
-def random_normal1D(std):
-    result = np.empty_like(std)
-    for i in range(std.shape[0]):
-        result[i] = normalvariate(0.0, std[i])
-    return result
+from random import random, shuffle
 
 @numba.jit(nopython=True)
 def any1D(bools):
@@ -56,22 +35,10 @@ def clip1D(a, low, high):
     return result
 
 @numba.jit(nopython=True)
-def interpolate2D(new, old, t, t0, tn):
-    R, C = new.shape
-    
-    result = np.empty_like(new)
-    for i in range(R):
-        for j in range(C):
-            result[i, j] = (tn-t) * old[i, j] + (t-t0) * new[i, j]
-            result[i, j] = result[i, j] / (tn-t0)
-    
-    return result
-
-@numba.jit(nopython=True)
 def travel_international(current_region_index, region_index, xmin, xmax, ymin, ymax):
-    new_region_index = []
-    x = []
-    y = []
+    new_region_index = np.empty((len(current_region_index),))
+    x = np.empty((len(current_region_index),))
+    y = np.empty((len(current_region_index),))
     
     region_index_bkp = region_index.copy()
     for i in range(len(current_region_index)):
@@ -79,12 +46,13 @@ def travel_international(current_region_index, region_index, xmin, xmax, ymin, y
         shuffle(region_index_list)
 
         new_region = region_index_list[0] if region_index_list[0] != current_region_index[i] else region_index_list[1]
-        new_region_index.append(new_region)
+        new_region_index[i] = new_region
 
         for j in range(len(region_index_bkp)):
             if region_index_bkp[j] == new_region:
-                x.append(uniform(xmin[j], xmax[j]))
-                y.append(uniform(ymin[j], ymax[j]))
+                x[i] = random() * (xmax[j] - xmin[j]) + xmin[j]
+                y[i] = random() * (ymax[j] - ymin[j]) + ymin[j]
+                break
     
     return new_region_index, x, y
 
@@ -102,10 +70,9 @@ def get_new_infections(x, y, alive, infection, radius, prob_spread):
             if alive[j] == 0 or infection[j] > 0.0: # valid infectee is alive and doesn't have infection
                 continue
             
-            if ((x[i] - x[j]) ** 2 + (y[i] - y[j]) ** 2) <= radius[i] ** 2:
-                # infection can spread if uninfected people (j) are in close proximity with infected people (i)
-                if random() <= prob_spread[i]:
-                    infectants.append(i)
-                    infectees.append(j)
+            if ((x[i] - x[j]) ** 2 + (y[i] - y[j]) ** 2) <= radius[i] ** 2 and random() <= prob_spread[i]:
+                # infection can spread (with some probability) if uninfected people (j) are in close proximity with infected people (i)
+                infectants.append(i)
+                infectees.append(j)
     
     return infectants, infectees

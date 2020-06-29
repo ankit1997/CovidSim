@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from core.utils import ops
+import core.utils.optimized_ops as ops
 from core.simulation.people import PEOPLE
 from core.simulation.regions import REGIONS
 from core.simulation.validator import validate_people, validate_regions
@@ -9,7 +9,7 @@ from core.simulation.validator import validate_people, validate_regions
 
 class World(object):
 
-	def __init__(self, num_people=100, T=10):
+	def __init__(self, num_people=200, T=10):
 		self.num_people = num_people
 		self.people = PEOPLE
 		self.regions = REGIONS
@@ -43,11 +43,17 @@ class World(object):
 			# add region population to world population
 			self.people = pd.concat([self.people, region_population], axis=0).reset_index(drop=True)
 	
+	def initialize_infections(self, num_infections=5):
+		# set few people with infections
+		idx = self.people.sample(n=num_infections).index
+		self.people.loc[idx, 'infection'] = 0.1
+	
 	def simulate(self):
 		self.t += 1
 
 		self.move()
 		self.spread_infections()
+		self.change_severity()
 	
 	def move(self):
 		# simulate travel
@@ -60,12 +66,12 @@ class World(object):
 
 		# get travellers indices
 		alive = combined.loc[:, 'alive'] == 1
-		domestic = alive & (ops.random1D(N) < combined['travel_dom'])
-		international = alive & (ops.random1D(N) < combined['travel_int'])
+		domestic = alive & (np.random.random((N,)) < combined['travel_dom'])
+		international = alive & (np.random.random((N,)) < combined['travel_int'])
 		
 		# get new domestic coordinates
-		move_x = ops.random_normal1D(combined.loc[domestic, 'domestic_travel_step'].values)
-		move_y = ops.random_normal1D(combined.loc[domestic, 'domestic_travel_step'].values)
+		move_x = np.random.normal(scale=combined.loc[domestic, 'domestic_travel_step'])
+		move_y = np.random.normal(scale=combined.loc[domestic, 'domestic_travel_step'])
 		
 		# move people and make sure no one leaves boundary while domestic travel
 		combined.loc[domestic, 'x'] = ops.clip1D(ops.add1D(combined.loc[domestic, 'x'].values, move_x), combined.loc[domestic, 'xmin'].values, combined.loc[domestic, 'xmax'].values)
@@ -75,7 +81,8 @@ class World(object):
 		self.people.loc[domestic, ['x', 'y']] = combined.loc[domestic, ['x', 'y']]
 		
 		if ops.any1D(international.values):
-
+			
+			# get new location and position of people travelling internationally
 			new_region_index, new_x, new_y = ops.travel_international(
 				combined.loc[international, 'region_id'].values, 
 				self.regions.index.values, 
@@ -85,6 +92,7 @@ class World(object):
 				self.regions.ymax.values
 			)
 
+			# set new attributes
 			self.people.loc[international, 'region_name'] = self.regions.loc[new_region_index, 'region_name'].values
 			self.people.loc[international, 'x'] = new_x
 			self.people.loc[international, 'y'] = new_y
@@ -100,4 +108,14 @@ class World(object):
 													combined.alive.values, combined.infection.values, 
 													combined.infection_radius.values, combined.prob_of_spread.values)
 		
-		self.people.loc[infectee, 'infection'] = self.people.loc[infectant, 'infection'].values
+		# self.people.loc[infectee, 'infection'] = self.people.loc[infectant, 'infection'].values # TEMP COMMENTED
+		self.people.loc[infectee, 'infection'] = 0.2
+	
+	def change_severity(self):
+		# modify the degree of infection
+		infected = (self.people.alive == 1) & (self.people.infection > 0.0)
+		self.people.loc[infected, 'infection'] += 0.01
+
+		# when infection exceeds 1.0, then..
+		dead = self.people.infection >= 1.0
+		self.people.loc[dead, 'alive'] = 0
