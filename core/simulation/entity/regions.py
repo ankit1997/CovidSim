@@ -18,6 +18,8 @@ REGIONS = pd.DataFrame({
     'quarantine': [0.0] * n,
 	'infection_radius': [5.0] * n,
 	'prob_of_spread': [0.2] * n,
-	'visible_infection': [0.4] * n
+	'visible_infection': [0.4] * n,
+
+	'funds': [1e9] * n,
 
 })

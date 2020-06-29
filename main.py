@@ -12,7 +12,7 @@ def main(args):
         for _ in range(100):
             world.simulate()
         t2 = time.time()
-        print('Average time taken per simulation:', (t2-t1)/100.0, "seconds") # 0.2943538737297058 seconds
+        print('Average time taken per simulation:', (t2-t1)/100.0, "seconds") # 0.24 seconds
     else:
         animate = Animate(world)
         animate.start()

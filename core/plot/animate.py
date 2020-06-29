@@ -61,6 +61,8 @@ class Animate:
 		figManager = plt.get_current_fig_manager()
 		figManager.window.showMaximized()
 
+		# ani.save('myAnimation.gif', writer='imagemagick', fps=30)
+
 		plt.draw()
 		plt.show()
 	

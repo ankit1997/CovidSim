@@ -2,9 +2,11 @@ import numpy as np
 import pandas as pd
 
 import core.utils.optimized_ops as ops
-from core.simulation.people import PEOPLE
-from core.simulation.regions import REGIONS
+from core.simulation.entity.people import PEOPLE
+from core.simulation.entity.regions import REGIONS
+from core.simulation.entity.medic import MEDIC
 from core.simulation.validator import validate_people, validate_regions
+from core.simulation.policy.policymanager import PolicyManager
 
 
 class World(object):
@@ -13,6 +15,7 @@ class World(object):
 		self.num_people = num_people
 		self.people = PEOPLE
 		self.regions = REGIONS
+		self.medics = MEDIC
 		self.T = T
 		self.t = 0
 
@@ -54,6 +57,13 @@ class World(object):
 		self.move()
 		self.spread_infections()
 		self.change_severity()
+
+		# subtract daily expenses per region
+		# self.regions.loc[i, 'funds']
+		# for i in range(len(self.regions)):
+		# 	total_active_population = self.people.groupby('region_name').sum().loc[self.regions.loc[i, 'region_name'], 'alive']
+		# 	self.regions.loc[i, 'funds'] -= PolicyManager.DAILY_EXPENSE_FACTOR * total_active_population
+			
 	
 	def move(self):
 		# simulate travel
