@@ -1,10 +1,12 @@
 import sys
 import time
 from core.plot.animate import Animate
-from core.simulation.world import World
+# from core.simulation.world import World
+from core.simulation.simulate import Simulator
 
 def main(args):
-    world = World()
+
+    world = Simulator(int(args[1]))
     world.initialize_infections(5)
 
     if '-profile' in args:
@@ -14,7 +16,7 @@ def main(args):
         t2 = time.time()
         print('Average time taken per simulation:', (t2-t1)/100.0, "seconds") # 0.24 seconds
     else:
-        animate = Animate(world)
+        animate = Animate(world, world.call)
         animate.start()
 
 if __name__ == '__main__':

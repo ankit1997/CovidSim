@@ -6,9 +6,9 @@ REGIONS = pd.DataFrame({
 	'region_id': range(n),
 	'region_name': ['USA', 'India', 'Canada', 'UK', 'China', 'Australia'],
 	
-    'travel_dom': [1.0, 1.0, 0.5, 1.0, 1.0, 1.0],
+    'travel_dom': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
     'travel_int': [0.001, 0.001, 0.001, 0.00001, 0.001, 0.01],
-    'domestic_travel_step': [2.0, 2.0, 2.0, 1.0, 1.0, 1.0],
+    'domestic_travel_step': [2.0, 2.0, 2.0, 2.0, 2.0, 2.0],
 
 	'xmin': [0, 120, 240, 0, 120, 240],
 	'xmax': [100, 220, 340, 100, 220, 340],
