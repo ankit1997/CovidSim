@@ -62,7 +62,7 @@ class Simulator(object):
 	def get_SIR(self):
 		return self._get_SIR(
 			self.people.loc[:, ['region_id', 'alive', 'infection']].values,
-			self.regions.loc[:, ['region_id', 'xmax', 'ymin', 'ymax']].values
+			self.regions.loc[:, ['region_id', 'xmax', 'ymin', 'ymax', 'visible_infection']].values
 		)
 	
 	def call(self):
@@ -89,12 +89,12 @@ class Simulator(object):
 	@njit
 	def _get_SIR(people, regions):
 		region_id, alive, infection = people[:, 0], people[:, 1], people[:, 2]
-		r_region_id, r_xmax, r_ymin, r_ymax = regions[:, 0], regions[:, 1], regions[:, 2], regions[:, 3]
+		r_region_id, r_xmax, r_ymin, r_ymax, visible_infection = regions[:, 0], regions[:, 1], regions[:, 2], regions[:, 3], regions[:, 4]
 
-		sir = np.empty(shape=(regions.shape[0], 5))
+		sir = np.empty(shape=(regions.shape[0], 6))
 
 		for r in range(regions.shape[0]):
-			N, S, I, R = 0.0, 0, 0, 0
+			N, S, I_, I, R = 0.0, 0, 0, 0, 0
 			for p in range(people.shape[0]):
 				if region_id[p] == r_region_id[r]:
 					N += 1.0
@@ -102,10 +102,12 @@ class Simulator(object):
 						R += 1
 					elif infection[p] == 0:
 						S += 1
+					elif infection[p] < visible_infection[r]:
+						I_ += 1
 					else:
 						I += 1
 			height = float(r_ymax[r] - r_ymin[r])
-			sir[r, :] = [r_xmax[r], r_ymin[r], S*height/N, I*height/N, R*height/N]
+			sir[r, :] = [r_xmax[r], r_ymin[r], S*height/N, I_*height/N, I*height/N, R*height/N]
 		
 		return sir
 
@@ -201,6 +203,11 @@ class Simulator(object):
 	def change_severity(alive, infection):
 
 		for i in range(alive.shape[0]):
+
+			# for people with small signs of infection, a 10% change that its common cold
+			# TODO: parameterize this 10% value
+			if alive[i] > 0 and infection[i] < 0.2 and random() < 0.1:
+				infection[i] = 0.0
 			
 			if alive[i] > 0 and infection[i] > 0.0 and infection[i] < 1.0:
 				infection[i] = min(infection[i] + 0.01, 1.0)
