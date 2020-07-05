@@ -2,10 +2,12 @@ import numpy as np
 import pandas as pd
 from numba import njit
 from queue import Queue
-from random import random
+from random import random, shuffle, normalvariate
 
 from core.simulation.entity.people import PEOPLE
 from core.simulation.entity.regions import REGIONS
+
+PROB_LETHAL = 0.3
 
 class Simulator(object):
 
@@ -72,6 +74,8 @@ class Simulator(object):
 		home_region_id, region_id, x, y, alive = people[:, 0], people[:, 1], people[:, 2], people[:, 3], people[:, 4]
 		r_region_id, r_xmin, r_xmax, r_ymin, r_ymax, r_travel_dom, r_travel_int, r_step = regions[:, 0], regions[:, 1], regions[:, 2], regions[:, 3], regions[:, 4], regions[:, 5], regions[:, 6], regions[:, 7]
 
+		idx = np.arange(regions.shape[0])
+		
 		for i in range(people.shape[0]):
 			
 			travel_dom_i, travel_int_i = -1.0, 1.0
@@ -92,22 +96,23 @@ class Simulator(object):
 						break
 				
 				# travel within step size 
-				x[i] = x[i] + (2.0 * random() - 1.0) * step
-				y[i] = y[i] + (2.0 * random() - 1.0) * step
+				x[i] = x[i] + normalvariate(0.0, 1.0) * step
+				y[i] = y[i] + normalvariate(0.0, 1.0) * step
 
 				# clip position to within bounding box
 				x[i] = xm if x[i] < xm else (xM if x[i] > xM else x[i])
 				y[i] = ym if y[i] < ym else (yM if y[i] > yM else y[i])
 			
-			elif alive[i] > 0 and travel_int_i > random():
+			if alive[i] > 0 and travel_int_i > random():
+
+				# shuffle international destinations
+				shuffle(idx)
 				
 				# find new region to go to
-				new_region_id, new_region_x, new_region_y = -1, -1.0, -1.0
-				for j in range(regions.shape[0]):
-					if home_region_id[i] != r_region_id[j] and (random() > 0.4 or j == regions.shape[0]-1):
-						new_region_id = r_region_id[j]
-						new_region_x = random() * (r_xmax[j] - r_xmin[j]) + r_xmin[j]
-						new_region_y = random() * (r_ymax[j] - r_ymin[j]) + r_ymin[j]
+				j = idx[0] if home_region_id[i] != r_region_id[idx[0]] else idx[1]
+				new_region_id = r_region_id[j]
+				new_region_x = random() * (r_xmax[j] - r_xmin[j]) + r_xmin[j]
+				new_region_y = random() * (r_ymax[j] - r_ymin[j]) + r_ymin[j]
 				
 				x[i] = new_region_x
 				y[i] = new_region_y
@@ -141,7 +146,7 @@ class Simulator(object):
 				
 				if ((x[i] - x[j]) ** 2 + (y[i] - y[j]) ** 2) <= radius ** 2 and random() <= prob:
 					# infection can spread (with some probability) if uninfected people (j) are in close proximity with infected people (i)
-					infection[j] = min(infection[j] + 0.1, 1.0)
+					infection[j] = min(infection[j] + 0.01, 1.0)
 
 		return infection
 	

@@ -21,8 +21,12 @@ class Animate:
 
 		# interpolation parameters
 		self.animT0	= 0
-		self.animTn = 10
+		self.animTn = 8
 		self.animDelta = 1
+
+		# Set up formatting for the movie files
+		Writer = animation.writers['ffmpeg']
+		self.writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
 
 	def start(self):
 
@@ -40,8 +44,9 @@ class Animate:
 		self.new_color = animate_ops.get_colors(self.world.people.alive.values, self.world.people.infection.values)
 		self.old_color = self.new_color.copy()
 
-		scat = self.ax.scatter(self.world.people.x, self.world.people.y, s=0.5)
-		self.ax.axis('off')
+		scat = self.ax.scatter(self.world.people.x, self.world.people.y, s=2)
+		self.ax.axis('equal')
+		# self.ax.axis('off')
 		self.ax.set_title('World')
 		self.ax.grid(color='#2A3459')
 
@@ -50,27 +55,24 @@ class Animate:
 		width = self.world.regions.loc[:, 'xmax'] - x0
 		y0 = self.world.regions.loc[:, 'ymin']
 		height = self.world.regions.loc[:, 'ymax'] - y0
-		# names = self.world.regions.loc[:, 'region_name']
+		names = self.world.regions.loc[:, 'region_name']
 
 		for i in range(len(self.world.regions)):
-			self.ax.add_patch(Rectangle((x0[i]-2, y0[i]-2), width[i]+2, height[i]+2, fill=None, edgecolor='#FF8C00'))
-			# self.ax.text(x0[i], y0[i]-10, names[i])
+			self.ax.add_patch(Rectangle((x0[i]-5, y0[i]-5), width[i]+10, height[i]+10, fill=None, edgecolor='#FF8C00'))
+			self.ax.text(x0[i], y0[i]-15, names[i])
 
 		ani = animation.FuncAnimation(self.fig, self.animate, interval=10, fargs=(scat,), blit=True, 
 									frames=np.arange(self.animT0, self.animTn, self.animDelta))
-		
-		figManager = plt.get_current_fig_manager()
-		figManager.window.showMaximized()
 
 		plt.draw()
 		plt.show()
-	
+
 	def animate(self, t, scat):
 
 		# first frame of day
 		if t == self.animT0:
 			
-			self.anim_func() # TODO: use parallel execution via Thread API
+			# self.anim_func() # TODO: use parallel execution via Thread API
 
 			# set new coordinates
 			self.new_coordinates = self.world.people.loc[:, ['x', 'y']].values
@@ -79,8 +81,8 @@ class Animate:
 			self.new_color = animate_ops.get_colors(self.world.people.alive.values, self.world.people.infection.values)
 
 			# simulate in parallel (so that interpolation time is not wasted)
-			# self.thread = Thread(target=self.world.simulate)
-			# self.thread.start()
+			self.thread = Thread(target=self.anim_func)
+			self.thread.start()
 
 		# for any point in time t, interpolate between old and new coordinates and color
 		coordinates = animate_ops.interpolate2D(self.new_coordinates, self.old_coordinates, t, self.animT0, self.animTn)
@@ -95,7 +97,7 @@ class Animate:
 			self.old_color = self.new_color
 
 			# wait for last simulation to end
-			# self.thread.join() # TODO: use parallel execution
+			self.thread.join() # TODO: use parallel execution
 
 		return scat,
 		

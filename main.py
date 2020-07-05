@@ -12,7 +12,7 @@ def main(args):
     if '-profile' in args:
         t1 = time.time()
         for _ in range(100):
-            world.simulate()
+            world.call()
         t2 = time.time()
         print('Average time taken per simulation:', (t2-t1)/100.0, "seconds") # 0.24 seconds
     else:
