@@ -11,20 +11,28 @@ PROB_LETHAL = 0.3
 
 class Simulator(object):
 
+	'''
+		Simulator class
+		Arguments:
+			`num_people`: Number of people per region
+	'''
+
 	def __init__(self, num_people):
 		self.num_people = num_people
 		self.people = PEOPLE
 		self.regions = REGIONS
 		self.frameQueue = Queue()
 
-		self.initialize()
+		self.create_people()
 	
-	def initialize(self):
-		# initialize world dataframe
-		print('Initializing a {}x{} world...'.format(len(self.regions), self.num_people))
+	def create_people(self):
+		# create people per region
+
+		print('Creating a {}x{} world...'.format(len(self.regions), self.num_people))
 
 		# loop for each region
 		for i, region in enumerate(self.regions.region_id):
+			
 			# get region window
 			xmin, xmax, ymin, ymax = self.regions.loc[i, ['xmin', 'xmax', 'ymin', 'ymax']].values.tolist()
 			
@@ -47,6 +55,16 @@ class Simulator(object):
 		idx = self.people.sample(n=num_infections).index
 		self.people.loc[idx, 'infection'] = 0.1
 	
+	def set_regions(self, regions):
+		# update the regions. This should either add new region or update properties of existing region(s)
+		self.regions = regions
+	
+	def get_SIR(self):
+		return self._get_SIR(
+			self.people.loc[:, ['region_id', 'alive', 'infection']].values,
+			self.regions.loc[:, ['region_id', 'xmax', 'ymin', 'ymax']].values
+		)
+	
 	def call(self):
 
 		# travel people around
@@ -66,6 +84,30 @@ class Simulator(object):
 			self.people.loc[:, 'alive'].values, 
 			self.people.loc[:, 'infection'].values
 		)
+	
+	@staticmethod
+	@njit
+	def _get_SIR(people, regions):
+		region_id, alive, infection = people[:, 0], people[:, 1], people[:, 2]
+		r_region_id, r_xmax, r_ymin, r_ymax = regions[:, 0], regions[:, 1], regions[:, 2], regions[:, 3]
+
+		sir = np.empty(shape=(regions.shape[0], 5))
+
+		for r in range(regions.shape[0]):
+			N, S, I, R = 0.0, 0, 0, 0
+			for p in range(people.shape[0]):
+				if region_id[p] == r_region_id[r]:
+					N += 1.0
+					if alive[p] == 0:
+						R += 1
+					elif infection[p] == 0:
+						S += 1
+					else:
+						I += 1
+			height = float(r_ymax[r] - r_ymin[r])
+			sir[r, :] = [r_xmax[r], r_ymin[r], S*height/N, I*height/N, R*height/N]
+		
+		return sir
 
 	@staticmethod
 	@njit
@@ -78,6 +120,7 @@ class Simulator(object):
 		
 		for i in range(people.shape[0]):
 			
+			# find properties of current region - travel_dom and travel_int
 			travel_dom_i, travel_int_i = -1.0, 1.0
 			for j in range(regions.shape[0]):
 				if region_id[i] == r_region_id[j]:
@@ -111,9 +154,12 @@ class Simulator(object):
 				# find new region to go to
 				j = idx[0] if home_region_id[i] != r_region_id[idx[0]] else idx[1]
 				new_region_id = r_region_id[j]
+
+				# find random position inside new region
 				new_region_x = random() * (r_xmax[j] - r_xmin[j]) + r_xmin[j]
 				new_region_y = random() * (r_ymax[j] - r_ymin[j]) + r_ymin[j]
 				
+				# update position and region id
 				x[i] = new_region_x
 				y[i] = new_region_y
 				region_id[i] = new_region_id
@@ -131,7 +177,7 @@ class Simulator(object):
 			if alive[i] == 0 or infection[i] == 0.0: # valid infectant is alive and has infection
 				continue
 
-			# in the region where i belongs, get the value of infection radius and probability of spread
+			# get region properties - infection radius and probability of spread
 			radius, prob = -1.0, -1.0
 			for j in range(regions.shape[0]):
 				if r_region_id[j] == region_id[i]:
@@ -164,3 +210,8 @@ class Simulator(object):
 			
 		
 		return alive, infection
+	
+	@staticmethod
+	@njit
+	def send_to_hospital():
+		pass

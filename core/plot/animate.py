@@ -24,10 +24,6 @@ class Animate:
 		self.animTn = 8
 		self.animDelta = 1
 
-		# Set up formatting for the movie files
-		Writer = animation.writers['ffmpeg']
-		self.writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
-
 	def start(self):
 
 		self.fig, self.ax = plt.subplots()
@@ -44,7 +40,7 @@ class Animate:
 		self.new_color = animate_ops.get_colors(self.world.people.alive.values, self.world.people.infection.values)
 		self.old_color = self.new_color.copy()
 
-		scat = self.ax.scatter(self.world.people.x, self.world.people.y, s=2)
+		self.scat = self.ax.scatter(self.world.people.x, self.world.people.y, s=2)
 		self.ax.axis('equal')
 		# self.ax.axis('off')
 		self.ax.set_title('World')
@@ -60,14 +56,22 @@ class Animate:
 		for i in range(len(self.world.regions)):
 			self.ax.add_patch(Rectangle((x0[i]-5, y0[i]-5), width[i]+10, height[i]+10, fill=None, edgecolor='#FF8C00'))
 			self.ax.text(x0[i], y0[i]-15, names[i])
-
-		ani = animation.FuncAnimation(self.fig, self.animate, interval=10, fargs=(scat,), blit=True, 
+		
+		# get sir plot
+		xysir = self.world.get_SIR()
+		bar_width = 5
+		bar_margin = 7
+		self.r_bar = self.ax.bar(xysir[:, 0]+bar_margin, xysir[:, 4], bar_width, bottom=xysir[:, 1], color='gray', edgecolor=None)
+		self.i_bar = self.ax.bar(xysir[:, 0]+bar_margin, xysir[:, 3], bar_width, bottom=xysir[:, 1]+xysir[:, 4], color='red', edgecolor=None)
+		self.s_bar = self.ax.bar(xysir[:, 0]+bar_margin, xysir[:, 2], bar_width, bottom=xysir[:, 1]+xysir[:, 4]+xysir[:, 3], color=[0.03, 0.96, 0.99], edgecolor=None)
+		
+		ani = animation.FuncAnimation(self.fig, self.animate, interval=10, blit=False, 
 									frames=np.arange(self.animT0, self.animTn, self.animDelta))
 
 		plt.draw()
 		plt.show()
 
-	def animate(self, t, scat):
+	def animate(self, t):
 
 		# first frame of day
 		if t == self.animT0:
@@ -88,8 +92,8 @@ class Animate:
 		coordinates = animate_ops.interpolate2D(self.new_coordinates, self.old_coordinates, t, self.animT0, self.animTn)
 		# color = animate_ops.interpolate2D(self.new_color, self.old_color, t, self.animT0, self.animTn) # TODO: remove : unnecessary
 
-		scat.set_offsets(coordinates)
-		scat.set_color(self.new_color)
+		self.scat.set_offsets(coordinates)
+		self.scat.set_color(self.new_color)
 
 		# last frame of day
 		if t == (self.animTn - self.animDelta):
@@ -99,5 +103,23 @@ class Animate:
 			# wait for last simulation to end
 			self.thread.join() # TODO: use parallel execution
 
-		return scat,
+			# get world SIR
+			xysir = self.world.get_SIR()
+
+			# update Removed
+			for i, bar in enumerate(self.r_bar):
+				bar.set_height(xysir[i, 4])
+				bar.set_y(xysir[i, 1])
+			
+			# update Infected
+			for i, bar in enumerate(self.i_bar):
+				bar.set_height(xysir[i, 3])
+				bar.set_y(xysir[i, 1] + xysir[i, 4])
+			
+			# update Susceptible
+			for i, bar in enumerate(self.s_bar):
+				bar.set_height(xysir[i, 2])
+				bar.set_y(xysir[i, 1] + xysir[i, 4] + xysir[i, 3])
+
+		return self.scat, self.i_bar
 		
