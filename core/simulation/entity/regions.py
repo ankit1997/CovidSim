@@ -1,14 +1,16 @@
 import pandas as pd
 
+# number of regions
 n = 6
 
 REGIONS = pd.DataFrame({
 	'region_id': range(n),
 	'region_name': ['USA', 'India', 'Canada', 'UK', 'China', 'Australia'],
 	
-    'travel_dom': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-    'travel_int': [0.01, 0.01, 0.01, 0.01, 0.01, 0.01],
-    'domestic_travel_step': [2.0, 2.0, 2.0, 2.0, 2.0, 2.0],
+    'travel_dom': [1.0] * n,													# allowing people to move within the region
+    'travel_int_in': [0.5] * n, 												# allowing international travellers in the region
+	'travel_int_out': [0.01] * n,												# allowing people in the region to travel internationally
+    'domestic_travel_step': [2.0] * n,											# travel step size - for domestic travel
 
 	'xmin': [0, 150, 300, 0, 150, 300],
 	'xmax': [100, 250, 400, 100, 250, 400],
@@ -20,6 +22,6 @@ REGIONS = pd.DataFrame({
 	'prob_of_spread': [0.2] * n,
 	'visible_infection': [0.4] * n,
 
-	'funds': [1e9] * n,
+	'funds': [1e9] * n,															# initial funds allocated per region
 
 })

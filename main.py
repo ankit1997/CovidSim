@@ -43,4 +43,7 @@ def change_policy():
     return "Policy updated successfully"
 
 if __name__ == '__main__':
-    main(sys.argv)
+    if '-profile' in sys.argv:
+        profile()
+    else:
+        main(sys.argv)
