@@ -6,8 +6,14 @@ from threading import Thread
 from core.plot.animate import Animate
 from core.simulation.simulate import Simulator
 
+try:
+    num_people = int(sys.argv[1])
+except Exception as exp:
+    print('Parameter 1 must be a number')
+    exit()
+
 app = Flask(__name__)
-world = Simulator(int(sys.argv[1]))
+world = Simulator(num_people)
 anim_started = False
 
 def profile():
@@ -17,7 +23,7 @@ def profile():
     t2 = time.time()
     print('Average time taken per simulation:', (t2-t1)/100.0, "seconds") # 0.24 seconds
 
-def main(args):
+def main():
 
     Thread(target=app.run).start()
 
@@ -46,4 +52,4 @@ if __name__ == '__main__':
     if '-profile' in sys.argv:
         profile()
     else:
-        main(sys.argv)
+        main()
