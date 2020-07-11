@@ -165,17 +165,13 @@ class Simulator(object):
 					# found new region which accepted person i
 					if home_region_id[i] != r_region_id[idx[j]] and r_travel_int_in[idx[j]] > random():
 
-						new_region_id = r_region_id[idx[j]]
+						# update to random position inside new region
+						x[i] = random() * (r_xmax[idx[j]] - r_xmin[idx[j]]) + r_xmin[idx[j]]
+						y[i] = random() * (r_ymax[idx[j]] - r_ymin[idx[j]]) + r_ymin[idx[j]]
+						region_id[i] = r_region_id[idx[j]]
 
-						# find random position inside new region
-						new_region_x = random() * (r_xmax[idx[j]] - r_xmin[idx[j]]) + r_xmin[idx[j]]
-						new_region_y = random() * (r_ymax[idx[j]] - r_ymin[idx[j]]) + r_ymin[idx[j]]
+						break
 						
-						# update position and region id
-						x[i] = new_region_x
-						y[i] = new_region_y
-						region_id[i] = new_region_id
-
 		return x, y, region_id
 	
 	@staticmethod
