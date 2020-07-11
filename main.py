@@ -33,6 +33,7 @@ def start_simulation():
 def change_policy():
     # change policy of region
     # request parameters : `region_id`, `key`, `value`
+    # example: http://127.0.0.1:5000/change_policy?region_id=5&key=social_distancing&value=0.7
 
     region_id = int(request.args['region_id'])
     key = request.args['key']
