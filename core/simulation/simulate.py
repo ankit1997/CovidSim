@@ -1,13 +1,11 @@
 import numpy as np
 import pandas as pd
 from numba import njit
-from queue import Queue
 from random import random, shuffle, normalvariate
 
 from core.simulation.entity.people import PEOPLE
 from core.simulation.entity.regions import REGIONS
 
-PROB_LETHAL = 0.3
 
 class Simulator(object):
 
@@ -22,7 +20,6 @@ class Simulator(object):
 		self.people = PEOPLE
 		self.regions = REGIONS
 		self.T = 0
-		self.frameQueue = Queue()
 		self.create_people()
 	
 	def create_people(self):
@@ -146,8 +143,8 @@ class Simulator(object):
 				xm, xM, ym, yM, step = r_xmin[r], r_xmax[r], r_ymin[r], r_ymax[r], r_step[r]
 				
 				# travel within step size 
-				x[i] = x[i] + normalvariate(0.0, 1.0) * step
-				y[i] = y[i] + normalvariate(0.0, 1.0) * step
+				x[i] = x[i] + normalvariate(0.0, step)
+				y[i] = y[i] + normalvariate(0.0, step)
 
 				# clip position to within bounding box
 				x[i] = xm if x[i] < xm else (xM if x[i] > xM else x[i])

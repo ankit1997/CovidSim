@@ -41,7 +41,7 @@ class Animate:
 		self.old_color = self.new_color.copy()
 
 		self.scat = self.ax.scatter(self.world.people.x, self.world.people.y, s=2) # marker='o'
-		self.ax.axis('equal')
+		# self.ax.axis('equal')
 		# self.ax.axis('off')
 		self.ax.set_title('World')
 		self.ax.grid(color='#2A3459')

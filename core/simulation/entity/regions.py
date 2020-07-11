@@ -19,7 +19,7 @@ REGIONS = pd.DataFrame({
 
     'social_distancing': [0.0] * n,
 	'infection_radius': [2.0] * n,
-	'prob_of_spread': [0.2] * n,
+	'prob_of_spread': [0.5] * n,
 	'visible_infection': [0.4] * n,
 
 	'funds': [1e9] * n,															# initial funds allocated per region
