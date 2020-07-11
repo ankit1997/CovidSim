@@ -22,7 +22,7 @@ def validate_regions(regions):
         
         ## Validate range of column values
 
-        for col in ['travel_dom', 'travel_int', 'quarantine', 'prob_of_spread']:
+        for col in ['travel_dom', 'travel_int', 'social_distancing', 'prob_of_spread']:
             if np.count_nonzero((regions.loc[:, col] < 0.0) | (regions.loc[:, col] > 1.0)) > 0:
                 raise ValueError("{} values are outside [0, 1]".format(col))
         

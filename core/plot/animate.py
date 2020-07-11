@@ -18,10 +18,10 @@ class Animate:
 	def __init__(self, world, anim_func):
 		self.world = world
 		self.anim_func = anim_func
-
+		
 		# interpolation parameters
 		self.animT0	= 0
-		self.animTn = 8
+		self.animTn = 10
 		self.animDelta = 1
 
 	def start(self):
@@ -40,7 +40,7 @@ class Animate:
 		self.new_color = animate_ops.get_colors(self.world.people.alive.values, self.world.people.infection.values)
 		self.old_color = self.new_color.copy()
 
-		self.scat = self.ax.scatter(self.world.people.x, self.world.people.y, s=2)
+		self.scat = self.ax.scatter(self.world.people.x, self.world.people.y, s=2) # marker='o'
 		self.ax.axis('equal')
 		# self.ax.axis('off')
 		self.ax.set_title('World')
@@ -60,7 +60,7 @@ class Animate:
 		# get suir plot (Susceptible, Unidentified, Infected, Removed)
 		xysuir = self.world.get_SIR()
 		bar_width = 5
-		bar_margin = 7
+		bar_margin = 10
 		self.r_bar = self.ax.bar(xysuir[:, 0]+bar_margin, xysuir[:, 5], bar_width, bottom=xysuir[:, 1], color='gray', edgecolor=None)
 		self.i_bar = self.ax.bar(xysuir[:, 0]+bar_margin, xysuir[:, 4], bar_width, bottom=xysuir[:, 1]+xysuir[:, 5], color='red', edgecolor=None)
 		self.u_bar = self.ax.bar(xysuir[:, 0]+bar_margin, xysuir[:, 3], bar_width, bottom=xysuir[:, 1]+xysuir[:, 5]+xysuir[:, 4], color='yellow', edgecolor=None)

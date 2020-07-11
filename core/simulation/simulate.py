@@ -21,8 +21,8 @@ class Simulator(object):
 		self.num_people = num_people
 		self.people = PEOPLE
 		self.regions = REGIONS
+		self.T = 0
 		self.frameQueue = Queue()
-
 		self.create_people()
 	
 	def create_people(self):
@@ -55,9 +55,9 @@ class Simulator(object):
 		idx = self.people.sample(n=num_infections).index
 		self.people.loc[idx, 'infection'] = 0.1
 	
-	def set_regions(self, regions):
-		# update the regions. This should either add new region or update properties of existing region(s)
-		self.regions = regions
+	def set_policy(self, region_id, key, value):
+		# update region policy
+		self.regions.loc[self.regions.region_id == region_id, key] = value
 	
 	def get_SIR(self):
 		return self._get_SIR(
@@ -66,6 +66,9 @@ class Simulator(object):
 		)
 	
 	def call(self):
+
+		# current timestep
+		self.T += 1
 
 		# travel people around
 		self.people.loc[:, 'x'], self.people.loc[:, 'y'], self.people.loc[:, 'region_id'] = self.travel(
@@ -84,10 +87,19 @@ class Simulator(object):
 			self.people.loc[:, 'alive'].values, 
 			self.people.loc[:, 'infection'].values
 		)
-	
+
+		# social distancing
+		self.people.loc[:, 'x'], self.people.loc[:, 'y'] = self.social_distancing(
+			self.people.loc[:, ['x', 'y', 'alive', 'region_id']].values,
+			self.regions.loc[:, ['region_id', 'xmin', 'xmax', 'ymin', 'ymax', 'social_distancing']].values
+		)
+
 	@staticmethod
 	@njit
 	def _get_SIR(people, regions):
+		# returns the fraction of susceptible (S), Infected-unknown(I_), Infected-known (I), Removed (R) values
+		# additionally sends the x,y coordinates of bar plot used in animation
+
 		region_id, alive, infection = people[:, 0], people[:, 1], people[:, 2]
 		r_region_id, r_xmax, r_ymin, r_ymax, visible_infection = regions[:, 0], regions[:, 1], regions[:, 2], regions[:, 3], regions[:, 4]
 
@@ -204,10 +216,10 @@ class Simulator(object):
 
 		for i in range(alive.shape[0]):
 
-			# for people with small signs of infection, a 10% change that its common cold
-			# TODO: parameterize this 10% value
+			# for people with small signs of infection, a small change that its common flu and will heal automatically
+			# TODO: parameterize this value
 			if alive[i] > 0 and infection[i] < 0.2 and random() < 0.1:
-				infection[i] = 0.0
+				infection[i] /= 2.0
 			
 			if alive[i] > 0 and infection[i] > 0.0 and infection[i] < 1.0:
 				infection[i] = min(infection[i] + 0.01, 1.0)
@@ -220,5 +232,53 @@ class Simulator(object):
 	
 	@staticmethod
 	@njit
-	def send_to_hospital():
-		pass
+	def social_distancing(people, regions):
+		# apply social distancing through pretty dump repel force
+
+		x, y, alive, region_id = people[:, 0], people[:, 1], people[:, 2], people[:, 3]
+		r_region_id, r_xmin, r_xmax, r_ymin, r_ymax, r_social_dist = regions[:, 0], regions[:, 1], regions[:, 2], regions[:, 3], regions[:, 4], regions[:, 5]
+
+		K = 100.0
+
+		# loop through all regions and apply social distancing
+		for r in range(regions.shape[0]):
+
+			n_iter = int(r_social_dist[r] * 100)
+			xm, xM, ym, yM = r_xmin[r], r_xmax[r], r_ymin[r], r_ymax[r] # region's bounding box
+
+			# keep looping multiple times based on social distancing factor to maximize distance between 2 people
+			for _ in range(n_iter):
+
+				# calculate the force exerted on person i by localites
+				for i in range(people.shape[0]):
+					
+					# person should be alive and belong to the region `r` under consideration
+					if alive[i] == 0.0 or region_id[i] != r_region_id[r]:
+						continue
+					
+					# change in (x, y)
+					delta_x, delta_y = 0.0, 0.0
+					
+					# loop through all other people in same region
+					for j in range(people.shape[0]):
+
+						# person `j` should be alive, in same region as that of person `i` and must not be equal to `i`
+						if region_id[i] != region_id[j] or alive[j] == 0.0 or i == j:
+							continue
+
+						# calculate distance between i and j
+						dist_ij = (x[i] - x[j]) ** 2 + (y[i] - y[j]) ** 2
+
+						# calculate direction of force (for super position)
+						delta_x = delta_x + ( K * ( x[i] - x[j] ) ) / ( dist_ij**2 + 0.0000001 )
+						delta_y = delta_y + ( K * ( y[i] - y[j] ) ) / ( dist_ij**2 + 0.0000001 )
+					
+					# get new position of persion i
+					x[i] = x[i] + delta_x
+					y[i] = y[i] + delta_y
+
+					# clip values within the region's bounding box
+					x[i] = xm if x[i] < xm else (xM if x[i] > xM else x[i])
+					y[i] = ym if y[i] < ym else (yM if y[i] > yM else y[i])
+					
+		return x, y
