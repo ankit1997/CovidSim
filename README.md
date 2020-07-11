@@ -9,3 +9,5 @@ The main entity being blamed across the world is the government! So I thought we
 Inspired by [3b1b animations](https://www.youtube.com/watch?v=gxAaO2rsdIs)
 
 Any suggestions are welcome!
+
+![Alt text](resources/screenshot.png?raw=true "Simulation sample")
