@@ -44,6 +44,11 @@ def change_policy():
     region_id = int(request.args['region_id'])
     key = request.args['key']
     value = float(request.args['value'])
+
+    # validations
+    if key not in world.regions.columns:
+        return "Invalid key. Possible values are: " + str(world.regions.columns.tolist())
+
     world.set_policy(region_id, key, value)
 
     return "Policy updated successfully"

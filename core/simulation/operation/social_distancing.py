@@ -1,18 +1,29 @@
 from numba import njit
 
+'''
+    Apply social distancing in each region based on region's policy - `social_distancing`.
+    Arguments:
+        people:
+            (x, y, alive, region_id)
+        regions:
+            (region_id, xmin, xmax, ymin, ymax, social_distancing_factor)
+    Returns:
+        (x, y) : new positions
+'''
 @njit
 def social_distancing(people, regions):
-    # apply social distancing through pretty dump repel force
 
+    # get values from arguments
     x, y, alive, region_id = people[:, 0], people[:, 1], people[:, 2], people[:, 3]
     r_region_id, r_xmin, r_xmax, r_ymin, r_ymax, r_social_dist = regions[:, 0], regions[:, 1], regions[:, 2], regions[:, 3], regions[:, 4], regions[:, 5]
 
-    K = 100.0
+    # repel force weight
+    K = 10.0
 
     # loop through all regions and apply social distancing
     for r in range(regions.shape[0]):
 
-        n_iter = int(r_social_dist[r] * 100)
+        n_iter = int(r_social_dist[r] * 100) # number of iterations of social distancing force
         xm, xM, ym, yM = r_xmin[r], r_xmax[r], r_ymin[r], r_ymax[r] # region's bounding box
 
         # keep looping multiple times based on social distancing factor to maximize distance between 2 people
@@ -49,5 +60,6 @@ def social_distancing(people, regions):
                 # clip values within the region's bounding box
                 x[i] = xm if x[i] < xm else (xM if x[i] > xM else x[i])
                 y[i] = ym if y[i] < ym else (yM if y[i] > yM else y[i])
-                
+    
+    # return new positions
     return x, y
