@@ -10,8 +10,8 @@ Inspired by [3b1b animations](https://www.youtube.com/watch?v=gxAaO2rsdIs)
 
 Any suggestions are welcome!
 
-To run animation, run:
+To run streamlit web app, run:
 
 `> streamlit run streamlit_ui.py`
 
-![Alt text](streamlit_screenshot.png?raw=true "Simulation sample")
+![Simulation](resources/streamlit_screenshot.png)
