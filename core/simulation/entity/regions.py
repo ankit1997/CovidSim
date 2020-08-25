@@ -18,7 +18,7 @@ REGIONS = pd.DataFrame({
 	'ymax': [100, 100, 100, 250, 250, 250],
 
     'social_distancing': [0.0] * n,
-	'infection_radius': [2.0] * n,
+	'infection_radius': [10.0] * n,
 	'prob_of_spread': [0.5] * n,
 	'visible_infection': [0.4] * n,
 
