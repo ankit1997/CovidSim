@@ -12,6 +12,6 @@ Any suggestions are welcome!
 
 To run streamlit web app, run:
 
-`> streamlit run streamlit_ui.py`
+`> streamlit run app.py`
 
 ![Simulation](resources/streamlit_screenshot.png)
