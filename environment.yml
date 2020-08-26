@@ -7,5 +7,6 @@ dependencies:
   - numba
   - matplotlib
   - pandas
-  - streamlit
   - flask
+  - pip:
+    - streamlit
