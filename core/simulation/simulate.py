@@ -22,8 +22,9 @@ class Simulator(object):
 
 	def __init__(self, num_people):
 		self.num_people = num_people
-		self.people = PEOPLE
-		self.regions = REGIONS
+		self.people = PEOPLE.copy()
+		self.regions = REGIONS.copy()
+		self.regions.population = num_people
 		self.T = 0
 		self.create_people()
 	
