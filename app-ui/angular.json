@@ -31,7 +31,8 @@
               "node_modules/primeflex/primeflex.css"
             ],
             "scripts": [
-              "node_modules/chart.js/dist/Chart.js"
+              "node_modules/chart.js/dist/Chart.js",
+              "node_modules/chartjs-plugin-annotation/chartjs-plugin-annotation.min.js"
             ]
           },
           "configurations": {

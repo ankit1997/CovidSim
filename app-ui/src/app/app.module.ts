@@ -16,10 +16,14 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { SliderModule } from 'primeng/slider';
 import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
+import { SimulateComponent } from './simulate/simulate.component';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { ProgressBarModule } from 'primeng/progressbar';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    SimulateComponent
   ],
   imports: [
     BrowserModule,
@@ -36,6 +40,7 @@ import { DropdownModule } from 'primeng/dropdown';
     SliderModule,
     CardModule,
     DropdownModule,
+    InputNumberModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -1,0 +1,6 @@
+<div class="box box-stretched" *ngIf="!firstTime" style="height: 100%;">
+    <p-card styleClass="p-card-shadow">
+        <p-chart #worldChart type="scatter" [data]="worldChartData" [options]="worldOptions">
+        </p-chart>
+    </p-card>
+</div>

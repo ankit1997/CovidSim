@@ -1,71 +1,96 @@
 <h2 style="margin: 10px;">
   Welcome to Covid-19 simulator
-  <i class="pi pi-external-link" (click)="openInNewTab('https://github.com/ankit1997/CovidSim')"
-    pTooltip="Github" tooltipPosition="bottom">
+  <i class="pi pi-external-link" (click)="openInNewTab('https://github.com/ankit1997/CovidSim')" pTooltip="Github"
+    tooltipPosition="bottom">
   </i>
 </h2>
 
 <div class="p-grid nested-grid">
   <div class="p-col-3">
 
-    <p-card styleClass="p-card-shadow">
+    <div class="box box-stretched">
+      <p-card header="{{regionData['region_name'][selectedRegion]}}" subheader="Day {{simulateComp.currentTime}}" styleClass="p-card-shadow">
 
-      <p>Select Region</p>
-      <p-dropdown name="regiondd" ngDefaultControl [options]="regions" [(ngModel)]="selectedRegion" placeholder="Select a Region">
-      </p-dropdown>
+        <div *ngIf="selectedRegion != undefined">
 
-      <div *ngIf="selectedRegion != undefined">
-        
-        <p>Regional Travel: {{regionData['travel_dom'][selectedRegion]}}</p>
-        <p-slider [(ngModel)]="regionData['travel_dom'][selectedRegion]" [min]="0.0" [max]="1.0" [step]="0.0001" 
-          (onChange)="onPolicyChange('travel_dom', $event.value)">
-        </p-slider>
+          <div class="p-grid">
+            <div class="p-col">
+              <p>Regional Travel: {{regionData['travel_dom'][selectedRegion]}}</p>
+              <p-slider [(ngModel)]="regionData['travel_dom'][selectedRegion]" [min]="0.0" [max]="1.0" [step]="0.01"
+                (onChange)="onPolicyChange('travel_dom', $event.value)">
+              </p-slider>
+            </div>
+            <div class="p-col">
+              <p>Travel Step: {{regionData['domestic_travel_step'][selectedRegion]}}</p>
+              <p-slider [(ngModel)]="regionData['domestic_travel_step'][selectedRegion]" [min]="0" [max]="50"
+                [step]="3" (onChange)="onPolicyChange('domestic_travel_step', $event.value)">
+              </p-slider>
+            </div>
+          </div>
 
-        <p>Regional Travel Step: {{regionData['domestic_travel_step'][selectedRegion]}}</p>
-        <p-slider [(ngModel)]="regionData['domestic_travel_step'][selectedRegion]" [min]="0.0" [max]="50.0" [step]="0.5" 
-          (onChange)="onPolicyChange('domestic_travel_step', $event.value)">
-        </p-slider>
+          <div class="p-grid">
+            <div class="p-col">
+              <p>Incoming: {{regionData['travel_int_in'][selectedRegion]}}</p>
+              <p-slider [(ngModel)]="regionData['travel_int_in'][selectedRegion]" [min]="0.0" [max]="1.0" [step]="0.01"
+                (onChange)="onPolicyChange('travel_int_in', $event.value)">
+              </p-slider>
+            </div>
+            <div class="p-col">
+              <p>Outgoing: {{regionData['travel_int_out'][selectedRegion]}}</p>
+              <p-slider [(ngModel)]="regionData['travel_int_out'][selectedRegion]" [min]="0.0" [max]="1.0" [step]="0.01"
+                (onChange)="onPolicyChange('travel_int_out', $event.value)">
+              </p-slider>
+            </div>
+          </div>
 
-        <p>Incoming: {{regionData['travel_int_in'][selectedRegion]}}</p>
-        <p-slider [(ngModel)]="regionData['travel_int_in'][selectedRegion]" [min]="0.0" [max]="1.0" [step]="0.0001" 
-          (onChange)="onPolicyChange('travel_int_in', $event.value)">
-        </p-slider>
-        
-        <p>Outgoing: {{regionData['travel_int_out'][selectedRegion]}}</p>
-        <p-slider [(ngModel)]="regionData['travel_int_out'][selectedRegion]" [min]="0.0" [max]="1.0" [step]="0.0001" 
-          (onChange)="onPolicyChange('travel_int_out', $event.value)">
-        </p-slider>
+          <div class="p-grid">
+            <div class="p-col">
+              <p>Testing: {{regionData['visible_infection'][selectedRegion]}}</p>
+              <p-slider [(ngModel)]="regionData['visible_infection'][selectedRegion]" [min]="0.0" [max]="1.0"
+                [step]="0.01" (onChange)="onPolicyChange('visible_infection', $event.value)">
+              </p-slider>
+            </div>
+            <div class="p-col">
+              <p>Social dist.: {{regionData['social_distancing'][selectedRegion]}}</p>
+              <p-slider [(ngModel)]="regionData['social_distancing'][selectedRegion]" [min]="0.0" [max]="1.0"
+                [step]="0.01" (onChange)="onPolicyChange('social_distancing', $event.value)">
+              </p-slider>
+            </div>
+          </div>
 
-        <p>Testing: {{regionData['visible_infection'][selectedRegion]}}</p>
-        <p-slider [(ngModel)]="regionData['visible_infection'][selectedRegion]" [min]="0.0" [max]="1.0" [step]="0.0001" 
-          (onChange)="onPolicyChange('visible_infection', $event.value)">
-        </p-slider>
+          <!-- <div class="p-grid" style="margin-top: 15px;">
+            <div class="p-col">
+              <div class="p-inputgroup">
+                <input type="text" pInputText placeholder="Post news">
+                <button type="button" pButton pRipple icon="pi pi-save" styleClass="p-button-warn"></button>
+              </div>
+            </div>
+          </div> -->
 
-        <p>Social distancing: {{regionData['social_distancing'][selectedRegion]}}</p>
-        <p-slider [(ngModel)]="regionData['social_distancing'][selectedRegion]" [min]="0.0" [max]="1.0" [step]="0.0001" 
-          (onChange)="onPolicyChange('social_distancing', $event.value)">
-        </p-slider>
+        </div>
 
-      </div>
+        <ng-template pTemplate="footer">
+          <button pButton pRipple type="button" icon="{{play ? 'pi pi-pause' : 'pi pi-play'}}" class="p-button-rounded"
+            pTooltip="{{play ? 'Pause' : 'Play'}}" tooltipPosition="bottom"
+            (click)="play ? onPauseClick() : onPlayClick()">
+          </button>
+          <button pButton pRipple type="button" icon="pi pi-replay" class="p-button-rounded p-button-help"
+            pTooltip="Reset" tooltipPosition="bottom" (click)="onResetClick()">
+          </button>
+          <button pButton pRipple type="button" icon="pi pi-user-plus" class="p-button-rounded p-button-secondary"
+            *ngIf="selectedRegion != undefined"
+            pTooltip="Add person" tooltipPosition="bottom" (click)="onAddPersonClick()">
+          </button>
+          <button pButton pRipple type="button" icon="{{viewAll ? 'pi pi-eye-slash' : 'pi pi-eye'}}" class="p-button-rounded"
+            (click)="viewAll = !viewAll;">
+          </button>
+        </ng-template>
 
-      <ng-template pTemplate="footer">
-        <button pButton pRipple type="button" icon="{{play ? 'pi pi-pause' : 'pi pi-play'}}" class="p-button-rounded"
-          pTooltip="{{play ? 'Pause' : 'Play'}}" tooltipPosition="bottom"
-          (click)="play ? onPauseClick() : onPlayClick()">
-        </button>
-        <button pButton pRipple type="button" icon="pi pi-replay" class="p-button-rounded p-button-help"
-          pTooltip="Reset" tooltipPosition="bottom" (click)="onResetClick()">
-        </button>
-      </ng-template>
-
-    </p-card>
-  </div>
-  <div class="p-col-9">
-    <div class="box box-stretched" *ngIf="!firstTime">
-      <p-card [style]="{width: '100%'}" styleClass="p-card-shadow" width="70vw" height="90vh">
-        <p-chart #worldChart type="scatter" [data]="worldChartData" [options]="worldOptions">
-        </p-chart>
       </p-card>
     </div>
+  </div>
+  <div class="p-col-9">
+    <app-simulate #simulateComp [play]="play" [regionData]="regionData" [selectedRegion]="selectedRegion" [viewAll]="viewAll">
+    </app-simulate>
   </div>
 </div>
