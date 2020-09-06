@@ -22,8 +22,9 @@ class Simulator(object):
 
 	def __init__(self, num_people):
 		self.num_people = num_people
-		self.people = PEOPLE
-		self.regions = REGIONS
+		self.people = PEOPLE.copy()
+		self.regions = REGIONS.copy()
+		self.max_person_id = 1
 		self.T = 0
 		self.create_people()
 	
@@ -34,23 +35,35 @@ class Simulator(object):
 
 		# loop for each region
 		for i, region in enumerate(self.regions.region_id):
-			
-			# get region window
-			xmin, xmax, ymin, ymax = self.regions.loc[i, ['xmin', 'xmax', 'ymin', 'ymax']].values.tolist()
-			
-			# create region population
-			region_population = pd.DataFrame({
-				'person_id': range(i*self.num_people+1, i*self.num_people+1+self.num_people),
-				'home_region_id': [region] * self.num_people,
-				'region_id': [region] * self.num_people,
-				'x': (np.random.random(size=(self.num_people, ))) * (xmax-xmin) + xmin,
-				'y': (np.random.random(size=(self.num_people, ))) * (ymax-ymin) + ymin,
-				'alive': [1] * self.num_people,
-				'infection': [0.0] * self.num_people,
-			})
+			self.add_people_to_region(region, self.num_people)
+	
+	def add_people_to_region(self, region_id, num_people):
 
-			# add region population to world population
-			self.people = pd.concat([self.people, region_population], axis=0).reset_index(drop=True)
+		# get region from region id
+		region = self.regions.loc[self.regions.region_id == region_id]
+		if region.size == 0:
+			return
+		i = region.index.item()
+
+		# get region window
+		xmin, xmax, ymin, ymax = self.regions.loc[i, ['xmin', 'xmax', 'ymin', 'ymax']].values.tolist()
+		
+		# create region population
+		region_population = pd.DataFrame({
+			'person_id': range(self.max_person_id, self.max_person_id+num_people),
+			'home_region_id': [region_id] * num_people,
+			'region_id': [region_id] * num_people,
+			'x': (np.random.random(size=(num_people, ))) * (xmax-xmin) + xmin,
+			'y': (np.random.random(size=(num_people, ))) * (ymax-ymin) + ymin,
+			'alive': [1] * num_people,
+			'infection': [0.0] * num_people,
+		})
+
+		# update max person id
+		self.max_person_id += num_people
+
+		# add region population to world population
+		self.people = pd.concat([self.people, region_population], axis=0).reset_index(drop=True)
 	
 	def initialize_infections(self, num_infections=5):
 		# set few people with infections
@@ -70,7 +83,7 @@ class Simulator(object):
 	def call(self):
 
 		# current timestep
-		self.T += 1
+		self.T += 0.1
 
 		# travel people around
 		self.people.loc[:, 'x'], self.people.loc[:, 'y'], self.people.loc[:, 'region_id'] = travel_op(

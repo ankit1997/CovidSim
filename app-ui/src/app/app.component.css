@@ -1,0 +1,9 @@
+@import '../../node_modules/primeng/resources/themes/bootstrap4-dark-blue/theme.css';
+
+button {
+    margin: 4px;
+}
+
+.form-label {
+    width: 150px;
+}
