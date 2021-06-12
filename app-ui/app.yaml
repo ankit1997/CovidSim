@@ -1,0 +1,7 @@
+runtime: nodejs12
+handlers:
+  - url: /
+    static_files: dist/app-ui/index.html
+    upload: dist/app-ui/index.html
+  - url: /
+    static_dir: dist/app-ui
