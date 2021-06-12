@@ -1,2 +1,2 @@
 service: server
-runtime: python
+runtime: python39
